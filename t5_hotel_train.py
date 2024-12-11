@@ -4,20 +4,15 @@ import torch
 from transformers import AdamW
 
 # 加载 T5 模型
-model_name = "langboat/mengzi-t5-base"  # 可以尝试 t5-small 或 t5-large
+model_name = "./models/mengzi-t5-base"  # 可以尝试 t5-small 或 t5-large
 tokenizer = T5Tokenizer.from_pretrained(model_name)
 model = T5ForConditionalGeneration.from_pretrained(model_name)
 
 # 数据集
-data = [
-    {"question": "酒店附近有哪些景点", "answer": "酒店周边有动物园，以及著名5A 景区，坐地铁 2 站就到达"},
-    {"question": "有儿童乐园吗", "answer": "酒店免费提供儿童亲子乐园，不限时长可免费游玩"},
-    {"question": "可以洗衣服吗", "answer": "可以免费洗衣以及烘干"},
-    {"question": "早餐是几点开始", "answer": "早餐时间为早上 6:00 到 8:30 分"},
-    {"question": "送早餐吗", "answer": "部分房型含免费早餐，具体可咨询前台"},
-    {"question": "有洗衣房吗", "answer": "二楼设有免费洗衣房，可以洗衣服以烘干及熨烫"},
-    # 添加更多数据
-]
+import json
+
+with open('QA.json', 'r', encoding='utf-8') as file:
+    data = json.load(file)
 
 # 数据预处理
 inputs = [f"Question: {item['question']} Answer:" for item in data]
@@ -45,16 +40,18 @@ class QADataset(Dataset):
 
 dataset = QADataset(encoded_inputs, encoded_labels)
 dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
+# dataloader = DataLoader(dataset, batch_size=2, shuffle=True, num_workers=4)  # 设置 num_workers 为所需的线程数
 
 # 优化器
 optimizer = AdamW(model.parameters(), lr=5e-5)
 
 # 训练
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"Starting train by {device}")
 model.to(device)
 model.train()
 
-for epoch in range(10):  # 增加训练轮数
+for epoch in range(20):  # 增加训练轮数
     total_loss = 0
     for batch in dataloader:
         batch = {key: val.to(device) for key, val in batch.items()}
@@ -66,9 +63,14 @@ for epoch in range(10):  # 增加训练轮数
         total_loss += loss.item()
     print(f"Epoch {epoch + 1}, Loss: {total_loss / len(dataloader):.4f}")
 
+# 训练结束后保存模型
+torch.save(model.state_dict(), "models/t5_hotel_model.pth")  # 保存模型参数
+
 # 推理
 model.eval()
-test_question = "附近景点"
+# 加载模型参数
+model.load_state_dict(torch.load("models/t5_hotel_model.pth"))  # 加载保存的模型参数
+test_question = "附近有什么景点"
 input_text = f"Question: {test_question} Answer:"
 input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to(device)
 
