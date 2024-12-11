@@ -7,6 +7,8 @@ tokenizer = T5Tokenizer.from_pretrained('./models/mengzi-t5-base')  # 根据需�
 model = T5ForConditionalGeneration.from_pretrained('./models/mengzi-t5-base')
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if torch.cuda.is_available():
+    model.cuda()
 # 推理
 model.eval()
 # 加载模型参数

@@ -9,6 +9,9 @@ tokenizer = T5Tokenizer.from_pretrained('./models/mengzi-t5-base')  # 根据需�
 model = T5ForConditionalGeneration.from_pretrained('./models/mengzi-t5-base')
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if torch.cuda.is_available():
+    model.cuda()
+
 # 推理
 model.eval()
 # 加载模型参数
@@ -21,8 +24,14 @@ def infer():
     question = request.args.get('question')
     # ... 处理问题并生成推理结果 ...
     input_ids = tokenizer(question, return_tensors="pt").input_ids.to(device)
-    output_ids = model.generate(input_ids)
-    answer = tokenizer.decode(output_ids[0], skip_special_tokens=True, max_length=200)
+    # 模型生成答案
+    output_ids = model.generate(input_ids, max_length=50)
+    # 检查生成的答案是否有效
+    if output_ids[0].numel() == 0:  # 如果没有生成任何输出
+        answer = "抱歉，我无法回答这个问题。"
+    else:
+        answer = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+
 
     print(f"Question: {question}")
     print(f"Generated Answer: {answer}")
