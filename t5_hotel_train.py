@@ -5,8 +5,8 @@ from transformers import AdamW
 
 # 加载 T5 模型
 model_name = "./models/mengzi-t5-base"
-hotel_model_name = "models/t5_hotel_model_dev.pth"
-hotel_optimizer_name = "models/optimizer_dev.pth"
+hotel_model_name = "models/t5_hotel_model.pth"
+hotel_optimizer_name = "models/t5_hotel_optimizer.pth"
 
 tokenizer = T5Tokenizer.from_pretrained(model_name)
 model = T5ForConditionalGeneration.from_pretrained(model_name)
@@ -14,7 +14,7 @@ model = T5ForConditionalGeneration.from_pretrained(model_name)
 # 数据集
 import json
 
-with open('QA.base.json', 'r', encoding='utf-8') as file:
+with open('QA.json', 'r', encoding='utf-8') as file:
     data = json.load(file)
 
 # 数据预处理
@@ -62,7 +62,7 @@ if os.path.exists(hotel_optimizer_name):
     optimizer.load_state_dict(torch.load(hotel_optimizer_name))  # 加载优化器状态
 
 # 继续训练
-for epoch in range(20):  # 继续训练的轮数
+for epoch in range(35):  # 继续训练的轮数
     total_loss = 0
     for batch in dataloader:
         batch = {key: val.to(device) for key, val in batch.items()}
@@ -87,7 +87,7 @@ input_text = f"Question: {test_question} Answer:"
 input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to(device)
 
 # 模型生成答案
-output_ids = model.generate(input_ids, max_length=50)
+output_ids = model.generate(input_ids, max_length=150)
 answer = tokenizer.decode(output_ids[0], skip_special_tokens=True)
 print(f"Question: {test_question}")
 print(f"Generated Answer: {answer}")

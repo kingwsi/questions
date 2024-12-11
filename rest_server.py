@@ -15,7 +15,7 @@ if torch.cuda.is_available():
 # 推理
 model.eval()
 # 加载模型参数
-model.load_state_dict(torch.load("models/t5_hotel_model.pth"))  # 加载保存的模型参数
+model.load_state_dict(torch.load(model_path))  # 加载保存的模型参数
 
 app = Flask(__name__)
 
@@ -27,11 +27,7 @@ def infer():
     # 模型生成答案
     output_ids = model.generate(input_ids, max_length=50)
     # 检查生成的答案是否有效
-    if output_ids[0].numel() == 0:  # 如果没有生成任何输出
-        answer = "抱歉，我无法回答这个问题。"
-    else:
-        answer = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-
+    answer = tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
     print(f"Question: {question}")
     print(f"Generated Answer: {answer}")
