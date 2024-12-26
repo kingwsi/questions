@@ -22,10 +22,11 @@ app = Flask(__name__)
 @app.route('/infer', methods=['GET'])
 def infer():
     question = request.args.get('question')
-    # ... 处理问题并生成推理结果 ...
-    input_ids = tokenizer(question, return_tensors="pt").input_ids.to(device)
+
+    input_text = f"Question: {question} Answer:"
+    input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to(device)  # 将提示词与问题结合
     # 模型生成答案
-    output_ids = model.generate(input_ids, max_length=50)
+    output_ids = model.generate(input_ids, max_length=200)
     # 检查生成的答案是否有效
     answer = tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
@@ -33,7 +34,7 @@ def infer():
     print(f"Generated Answer: {answer}")
 
     # 手动构造 JSON 响应，使用 json.dumps() 并设置 ensure_ascii=False
-    response_data = json.dumps({'answer': answer}, ensure_ascii=False)
+    response_data = json.dumps({'answer': answer, 'question': question}, ensure_ascii=False)
 
     # 返回自定义响应
     return Response(response_data, content_type='application/json; charset=utf-8')
